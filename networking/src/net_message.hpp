@@ -2,6 +2,7 @@
 #define NET_MESSAGE_H_
 
 #include "net_utils.hpp"
+#include <memory>
 #include <type_traits>
 
 namespace olc {
@@ -84,6 +85,27 @@ namespace olc {
                 // return target message so it can be "chained"
                 return msg;
             }
+        };
+
+        // foward declaration of Connection class
+        template <typename T>
+        class Connection;
+
+        // encapsulates a messages, providing a shared_ptr to
+        // tag the connection the message came from. used by server object
+        // incase the connection object must be contacted
+        template <typename T>
+        struct owned_message {
+
+            std::shared_ptr<Connection<T>> remote = nullptr;
+            message<T> msg;
+
+            // Overload the output stream operator
+            friend std::ostream& operator << (std::ostream& os, owned_message<T>& msg) {
+                os << msg.msg;
+                return os;
+            }
+
         };
     }
 }
