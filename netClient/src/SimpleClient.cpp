@@ -1,3 +1,4 @@
+#include "net_message.hpp"
 #include <iostream>
 
 #include <olc_net.hpp>
@@ -8,8 +9,19 @@ enum class CustomMsgTypes : uint32_t // so each type id is 4 bytes
     MovePlayer
 };
 
+class CustomClient : public olc::net::client_interface<CustomMsgTypes> {
+    public:
+        void FireBullet(float x, float y) {
+            olc::net::message<CustomMsgTypes> msg;
+            msg.header.id = CustomMsgTypes::FireBullet;
+            msg << x << y;
+            Send(msg);
+        }
+};
+
 int main() {
 
+    /*
     olc::net::message<CustomMsgTypes> msg;
     msg.header.id = CustomMsgTypes::FireBullet;
 
@@ -33,6 +45,12 @@ int main() {
     msg >> xy >> f >> b >> a;
 
     std::cout << a << std::endl;
+    */
+
+    // easier to use client interface to connect and send
+    CustomClient c;
+    c.Connect("Random.website", 6000);
+    c.FireBullet(134.2563, 1525.151);
 
     return 0;
 }

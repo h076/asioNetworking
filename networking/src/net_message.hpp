@@ -89,7 +89,7 @@ namespace olc {
 
         // foward declaration of Connection class
         template <typename T>
-        class Connection;
+        class connection;
 
         // encapsulates a messages, providing a shared_ptr to
         // tag the connection the message came from. used by server object
@@ -97,7 +97,7 @@ namespace olc {
         template <typename T>
         struct owned_message {
 
-            std::shared_ptr<Connection<T>> remote = nullptr;
+            std::shared_ptr<connection<T>> remote = nullptr;
             message<T> msg;
 
             // Overload the output stream operator
