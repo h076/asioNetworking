@@ -6,6 +6,7 @@
 #include "net_tsQueue.hpp"
 #include "net_connection.hpp"
 #include <exception>
+#include <string>
 #include <type_traits>
 
 namespace hjw {
@@ -28,15 +29,18 @@ namespace hjw {
                 bool Connect(const std::string& host, const uint16_t port) {
 
                     try {
-                        // create connection
-                        m_oConnection = std::make_unique<connection<T>>(); //TODO
-
                         // resolve hostname/ip-address into tangiable physical address
                         asio::ip::tcp::resolver resolver(m_oContext);
-                        m_oEndpoints = resolver.resolve(host, std::to_string(port));
+                        asio::ip::tcp::resolver::results_type endpoints = resolver.resolve(host, std::to_string(port));
 
-                        // Tell connction to connect to server
-                        m_oConnection->ConnectToServer(m_oEndpoints);
+                        // create connection
+                        m_pConnection = std::make_unique<connection<T>>(
+                            connection<T>::owner::client,
+                            m_oContext, asio::ip::tcp::socket(m_oContext),
+                            m_qMessagesIn);
+
+                        // Connect to the server
+                        m_pConnection->ConnectToServer(endpoints);
 
                         // start context thread
                         m_tContextThread = std::thread([this]() {m_oContext.run();});
@@ -54,7 +58,7 @@ namespace hjw {
                     // if connection exists, disconnect
                     if(IsConnected()) {
                         // Disconnect from the server
-                        m_oConnection->Disconnect();
+                        m_pConnection->Disconnect();
                     }
 
                     // stop asio context and join its thread
@@ -63,13 +67,13 @@ namespace hjw {
                         m_tContextThread.join();
 
                     // release unique pointer for connection object
-                    m_oConnection.release();
+                    m_pConnection.release();
                 }
 
                 // Check if a connection is presnet
                 bool IsConnected() {
-                    if(m_oConnection)
-                        return m_oConnection->IsConnected();
+                    if(m_pConnection)
+                        return m_pConnection->IsConnected();
                     else
                         return false;
                 }
@@ -77,7 +81,7 @@ namespace hjw {
                 // send message to server
                 void Send(const message<T>& msg) {
                     if(IsConnected())
-                        m_oConnection->Send(msg);
+                        m_pConnection->Send(msg);
                 }
 
                 // Retrieve queue of messages from server
@@ -96,7 +100,7 @@ namespace hjw {
                 asio::ip::tcp::socket m_oSocket;
 
                 // The client has a single instance of connection object, which handles data transfer
-                std::unique_ptr<connection<T>> m_oConnection;
+                std::unique_ptr<connection<T>> m_pConnection;
 
                 // connection endpoints
                 asio::ip::tcp::endpoint m_oEndpoints;

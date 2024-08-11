@@ -31,10 +31,25 @@ namespace hjw {
 
             public:
                 // called by only clients
-                bool ConnectToServer();
+                void ConnectToServer(const asio::ip::tcp::resolver::results_type& endpoints) {
+                    // only clients can connect to server
+                    if(m_nOwnerType == owner::client) {
+                        // Request asio to attempt to connect to endpoints
+                        // connecting endpoint to socket
+                        asio::async_connect(m_oSocket, endpoints,
+                            [this](std::error_code ec, asio::ip::tcp::endpoint endpoint) {
+                                if(!ec) {
+                                    ReadHeader();
+                                }else {
+                                    std::cerr << "[" << id << "] Failed to connect to server.\n";
+                                    m_oSocket.close();
+                                }
+                            });
+                    }
+                }
 
                 // called by both clients and server
-                bool Disconnect() {
+                void Disconnect() {
                     if(IsConnected()) {
                         // the asio context will close the socket when it is appropriate
                         asio::post(m_oAsioContext, [this]() {m_oSocket.close();});
@@ -104,7 +119,7 @@ namespace hjw {
                 void ReadBody() {
                     // now reading form the same socket
                     // using the temporary message body as a ppointer for asio buffer
-                    asio::async_read(m_oSocket, asio::buffer(&m_msgTemporaryIn.bod.data(), m_msgTemporaryIn.header.size),
+                    asio::async_read(m_oSocket, asio::buffer(m_msgTemporaryIn.body.data(), m_msgTemporaryIn.header.size),
                         [this](std::error_code ec, std::size_t length) {
                             if(!ec) {
                                 AddToIncomingMessageQueue();

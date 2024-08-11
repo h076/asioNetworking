@@ -4,12 +4,13 @@
 #include <hjw_net.hpp>
 #include <memory>
 
-enum class CustomMsgTypes : uint32_t {
+enum class CustomMsgTypes : uint32_t
+{
     ServerAccept,
     ServerDeny,
     ServerPing,
     MessageAll,
-    ServerMessage,
+    ServerMessage
 };
 
 class CustomServer : public hjw::net::server_interface<CustomMsgTypes> {
