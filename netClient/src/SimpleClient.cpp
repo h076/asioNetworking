@@ -1,7 +1,7 @@
 #include "net_message.hpp"
 #include <iostream>
 
-#include <olc_net.hpp>
+#include <hjw_net.hpp>
 
 enum class CustomMsgTypes : uint32_t // so each type id is 4 bytes
 {
@@ -9,10 +9,10 @@ enum class CustomMsgTypes : uint32_t // so each type id is 4 bytes
     MovePlayer
 };
 
-class CustomClient : public olc::net::client_interface<CustomMsgTypes> {
+class CustomClient : public hjw::net::client_interface<CustomMsgTypes> {
     public:
         void FireBullet(float x, float y) {
-            olc::net::message<CustomMsgTypes> msg;
+            hjw::net::message<CustomMsgTypes> msg;
             msg.header.id = CustomMsgTypes::FireBullet;
             msg << x << y;
             Send(msg);

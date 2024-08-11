@@ -7,6 +7,7 @@ project("asioNetworking")
 
 include_directories(networking "${PROJECT_SOURCE_DIR}/networking/src")
 add_subdirectory(netClient)
+add_subdirectory(netServer)
 
 set(HEADER_FILES)
 
