@@ -4,11 +4,16 @@
 #include "net_utils.hpp"
 #include "net_tsQueue.hpp"
 #include "net_message.hpp"
+#include <chrono>
 #include <memory>
 
 namespace hjw {
 
     namespace net {
+
+        // foward declare the server
+        template <typename T>
+        class server_interface;
 
         // enable_shared_from_this allows us to create a shared ptr from within this object,
         // provides a shared pointer to this keyword essentially
@@ -23,6 +28,19 @@ namespace hjw {
                     : m_oAsioContext(asioContext), m_oSocket(std::move(socket)), m_qMessagesIn(qIn)
                 {
                     m_nOwnerType = parent;
+
+                    // construct validation check data
+                    if(m_nOwnerType == owner::server) {
+                        // construct random data for client to recieve, transform and send back
+                        m_nHandshakeOut = uint64_t(std::chrono::system_clock::now().time_since_epoch().count());
+
+                        // scramble server side to check against client response
+                        m_nHandshakeCheck = Scramble(m_nHandshakeOut);
+                    }else {
+                        // connection is client to server, so dont define anything
+                        m_nHandshakeIn = 0;
+                        m_nHandshakeOut = 0;
+                    }
                 }
 
                 virtual ~connection() {}
@@ -39,7 +57,11 @@ namespace hjw {
                         asio::async_connect(m_oSocket, endpoints,
                             [this](std::error_code ec, asio::ip::tcp::endpoint endpoint) {
                                 if(!ec) {
-                                    ReadHeader();
+                                    // was : ReadHeader();
+                                    //
+                                    // now we want to read the validation data from the server
+                                    // then scramble and send back
+                                    ReadValidation();
                                 }else {
                                     std::cerr << "[" << id << "] Failed to connect to server.\n";
                                     m_oSocket.close();
@@ -62,13 +84,17 @@ namespace hjw {
                 }
 
                 // is called by the server interface when we create a new connection
-                void ConnectToClient(uint32_t uid = 0) {
+                void ConnectToClient(hjw::net::server_interface<T>* server, uint32_t uid = 0) {
                     if(m_nOwnerType == owner::server) {
                         if(m_oSocket.is_open()) {
                             id = uid;
 
-                            // Register task when we connect to client
-                            ReadHeader();
+                            // now we want to write validation data to new connections
+                            WriteValidation();
+
+                            // once the validation data has been written
+                            // the client would have read it and sent back the handshake
+                            ReadValidation(server);
                         }
                     }
                 }
@@ -191,6 +217,61 @@ namespace hjw {
                     ReadHeader();
                 }
 
+                // Scramble validation data
+                uint64_t Scramble(uint64_t nInput) {
+                    // XOR with random constant
+                    uint64_t out = nInput ^ 0xDDFAC06302AD3;
+                    out = (out & 0xADFCB27610439B) >> 16 | (out & 0x3726327AD) << 16;
+                    return out;
+                }
+
+                // ASYNC - used by both client and server to write validtion data
+                void WriteValidation() {
+                    asio::async_write(m_oSocket, asio::buffer(&m_nHandshakeOut, sizeof(uint64_t)),
+                        [this](std::error_code ec, std::size_t length) {
+                            if(!ec) {
+                                // Validation data sent so clients sit and wait for response
+                                if(m_nOwnerType == owner::client)
+                                    ReadHeader();
+                            }else {
+                                std::cerr << "[" << id << "] failed to write validation.\n";
+                                m_oSocket.close();
+                            }
+                        });
+                }
+
+                // ASYNC - used by the server and client
+                // pass server pointer incase we want to check if clinet has been validated
+                void ReadValidation(hjw::net::server_interface<T>* server = nullptr) {
+                    asio::async_read(m_oSocket, asio::buffer(&m_nHandshakeIn, sizeof(uint64_t)),
+                        [this, server](std::error_code ec, std::size_t length) {
+                            if(!ec) {
+                                if(m_nOwnerType == owner::client) {
+                                    // client connection so solve data using scramble
+                                    m_nHandshakeOut = Scramble(m_nHandshakeIn);
+
+                                    // write the result
+                                    WriteValidation();
+                                }else {
+                                    // server connection so check against client data
+                                    if(m_nHandshakeIn == m_nHandshakeCheck) {
+                                        std::cout << "Client validated.\n";
+                                        server->OnClientValidated(this->shared_from_this());
+
+                                        // now sit waiting the read data
+                                        ReadHeader();
+                                    }else {
+                                        std::cout << "Client Disconnetced [ReadValidation]\n";
+                                        m_oSocket.close();
+                                    }
+                                }
+                            }else {
+                                std::cout << "Client Disconnetced [ReadValidation]\n";
+                                m_oSocket.close();
+                            }
+                        });
+                }
+
             protected:
                 // Each connection has a unique socket
                 asio::ip::tcp::socket m_oSocket;
@@ -210,6 +291,11 @@ namespace hjw {
                 // is the connection owned by a server or client, determins some behaviour
                 owner m_nOwnerType = owner::server;
                 uint32_t id = 0;
+
+                // Handshake validation
+                uint64_t m_nHandshakeOut = 0; // used by the connection to send out
+                uint64_t m_nHandshakeIn = 0; // what the connection has recieved to scramble
+                uint64_t m_nHandshakeCheck = 0; // what the server uses to validate
 
         };
     }

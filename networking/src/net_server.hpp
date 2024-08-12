@@ -93,7 +93,7 @@ namespace hjw {
                                     // connection allowedm push to connection container
                                     m_dqConnections.push_back(std::move(newConnection));
 
-                                    m_dqConnections.back()->ConnectToClient(nIDCounter++);
+                                    m_dqConnections.back()->ConnectToClient(this, nIDCounter++);
 
                                     std::cout << "[" << m_dqConnections.back()->GetID() << "] Approved connection\n";
 
@@ -172,6 +172,12 @@ namespace hjw {
 
                 // Called to deal with message from specific client
                 virtual void OnMessage(std::shared_ptr<connection<T>> client, const message<T>& msg) {
+
+                }
+
+            public:
+                // Called when a client has been validated
+                virtual void OnClientValidated(std::shared_ptr<connection<T>> client) {
 
                 }
 
