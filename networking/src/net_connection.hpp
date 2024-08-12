@@ -99,8 +99,8 @@ namespace hjw {
                         [this](std::error_code ec, std::size_t length) {
                             if(!ec) {
                                 // Assuming the full message has been read
-                                if(m_msgTemporaryIn.header.size > 0) {
-                                    m_msgTemporaryIn.body.resize(m_msgTemporaryIn.header.size);
+                                if(m_msgTemporaryIn.header.size > 8) {
+                                    m_msgTemporaryIn.body.resize(m_msgTemporaryIn.header.size - 8);
                                     ReadBody();
                                 }else {
                                     // if no message body then we pass the message to the incoming queue
@@ -119,7 +119,7 @@ namespace hjw {
                 void ReadBody() {
                     // now reading form the same socket
                     // using the temporary message body as a ppointer for asio buffer
-                    asio::async_read(m_oSocket, asio::buffer(m_msgTemporaryIn.body.data(), m_msgTemporaryIn.header.size),
+                    asio::async_read(m_oSocket, asio::buffer(m_msgTemporaryIn.body.data(), m_msgTemporaryIn.body.size()),
                         [this](std::error_code ec, std::size_t length) {
                             if(!ec) {
                                 AddToIncomingMessageQueue();
@@ -135,7 +135,7 @@ namespace hjw {
                 void WriteHeader() {
                     // now writing to the socket, from the asio buffer that is
                     // initialised with a pointer to the first message in the message out queue
-                    asio::async_write(m_oSocket, asio::buffer(m_qMessagesOut.front().header, sizeof(message_header<T>)),
+                    asio::async_write(m_oSocket, asio::buffer(&m_qMessagesOut.front().header, sizeof(message_header<T>)),
                         [this](std::error_code ec, std::size_t length) {
                             if(!ec) {
                                 if(m_qMessagesOut.front().body.size() > 0) {
