@@ -145,7 +145,11 @@ namespace hjw {
                 }
 
                 // Called to explicitly process messages in the server queue
-                void update(size_t maxMesssages = -1) {
+                void update(size_t maxMesssages = -1, bool bWait = false) {
+                    // so that we do not occupy the CPU while doing nothing
+                    // we can tell the server to rest
+                    if (bWait) m_qMessagesIn.wait();
+
                     for(size_t messageCount = 0; messageCount < maxMesssages && !m_qMessagesIn.empty(); messageCount++) {
                         // grab the front message
                         auto msg = m_qMessagesIn.pop_front();

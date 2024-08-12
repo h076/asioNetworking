@@ -6,6 +6,7 @@
 // object iself
 
 #include "net_utils.hpp"
+#include <condition_variable>
 #include <mutex>
 
 namespace hjw {
@@ -38,12 +39,21 @@ namespace hjw {
                 void push_back(const T& item) {
                     std::scoped_lock lock(m_oMuxQueue);
                     m_oDeqQueue.emplace_back(std::move(item));
+
+                    // signal condition variable to wake up
+                    // unlocking the mutex protecting m_cvBlocking
+                    std::unique_lock<std::mutex> ul(m_oMuxBlocking);
+                    m_cvBlocking.notify_one();
                 }
 
                 // Add item to the front of queue
                 void push_front(const T& item) {
                     std::scoped_lock lock(m_oMuxQueue);
                     m_oDeqQueue.emplace_front(std::move(item));
+
+                    // signal conditon varaible to wake up
+                    std::unique_lock<std::mutex> ul(m_oMuxBlocking);
+                    m_cvBlocking.notify_one();
                 }
 
                 // Is queue empty
@@ -80,11 +90,22 @@ namespace hjw {
                     return t;
                 }
 
-            protected:
+                void wait() {
+                    while(empty()) {
+                        // we can use the condition variable to block the server
+                        // Then we can unlock the mutex to wake up the server
+                        std::unique_lock<std::mutex> ul(m_oMuxBlocking);
+                        m_cvBlocking.wait(ul);
+                    }
+                }
 
+            protected:
                 std::mutex m_oMuxQueue;
                 // double ended queue used as our underlying data structure
                 std::deque<T> m_oDeqQueue;
+
+                std::condition_variable m_cvBlocking;
+                std::mutex m_oMuxBlocking;
         };
     }
 }
