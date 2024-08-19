@@ -40,38 +40,19 @@ namespace hjw {
                 void PrintThreadCount() {std::cout << "Thread count : " << m_nThreadCount << std::endl;}
 
                 void Open() {
-                    // Signal handler to exit cleanly
-                    boost::asio::signal_set signals(m_oAsioContext, SIGINT, SIGTERM);
-                    signals.async_wait([&](auto, auto) {
-                       m_oAsioContext.stop();
-                       std::cout << "signal recieved, stoped the process." << std::endl;
-                    });
-
-                    // ssl context holds root sertification used for verification
-                    //load_root_certificates(m_oSSlContext);
-
-
                     // Launch the asynchronous operation
                     // Create instance of sessiona and return shared pointer
                     m_pSession = std::make_shared<session>(m_oAsioContext, m_oSSlContext);
                     m_pSession->Run(m_sHost.c_str(), m_sPort.c_str(), m_sRequest.c_str(), m_sEndpoint.c_str());
 
-                    // Run the IO service on the requested number of threads
-                    m_tvThreads.reserve(m_nThreadCount-1);
-                    for(int i = 0; i < m_nThreadCount; i++) {
-                        m_tvThreads.emplace_back([this] {
-                            m_oAsioContext.run();
-                        });
-                    }
-                    m_oAsioContext.run();
-                    std::cout << "here\n";
+                    // Run the IO service
+                    m_tContextThread = std::thread([this](){m_oAsioContext.run();});
                 }
 
                 void Close() {
-                    for(auto& t : m_tvThreads) {
-                        if(t.joinable())
-                            t.join();
-                    }
+                    m_oAsioContext.stop();
+                    if(m_tContextThread.joinable())
+                        m_tContextThread.join();
 
                     std::cout << "Socket connection closed\n";
                 }
@@ -80,6 +61,8 @@ namespace hjw {
                 asio::io_context m_oAsioContext;
                 ssl::context m_oSSlContext{ssl::context::tlsv12_client};
 
+                std::thread m_tContextThread;
+
                 std::shared_ptr<session> m_pSession;
 
                 std::string m_sHost;
@@ -87,7 +70,6 @@ namespace hjw {
                 std::string m_sRequest;
                 std::string m_sEndpoint;
 
-                std::vector<std::thread> m_tvThreads;
                 int m_nThreadCount;
         };
 

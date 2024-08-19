@@ -72,8 +72,8 @@ int main() {
     char buf[1] = {};
     bool bQuit = false;
 
-    bool keys[3] = {false, false, false};
-    bool oldKeys[3] = {false, false, false};
+    //bool keys[3] = {false, false, false};
+    //bool oldKeys[3] = {false, false, false};
 
     std::function<void(std::error_code, size_t)> read_handler;
     read_handler = [&](std::error_code ec, size_t length) {
