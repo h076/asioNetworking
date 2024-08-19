@@ -7,7 +7,8 @@ int main(int argc, char** argv)
     ws.SetPort("443");
     ws.SetRequest("{\"userKey\":\"wswfy1upa1xLq2MnfIYg\", \"symbol\":\"GBPUSD\", \"fmt\":\"SSV\"}");
     ws.SetEndpoint("/feedadv");
-    ws.Open();
+    if(!ws.isOpen())
+        ws.Open();
 
     asio::io_service ioService;
     asio::posix::stream_descriptor stream(ioService, STDIN_FILENO);
@@ -19,7 +20,7 @@ int main(int argc, char** argv)
     read_handler = [&](std::error_code ec, size_t length) {
                 if(!ec) {
                     if(length == 1 && buf[0] != '\n') {
-                        std::cout << "key : " << buf[0] << "\n";
+                        //std::cout << "key : " << buf[0] << "\n";
                         if(buf[0] == 'q') {
                             bQuit = true;
                             return;
@@ -39,7 +40,8 @@ int main(int argc, char** argv)
         continue;
     }
 
-    ws.Close();
+    if(ws.isOpen())
+        ws.Close();
     ioThread.join();
 
     return 0;

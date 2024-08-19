@@ -18,11 +18,15 @@ namespace hjw {
 
                 client_interface()
                     : m_sHost("null"), m_sPort("443"),
-                      m_sRequest("null"), m_nThreadCount(3),
-                      m_sEndpoint("null")
-                {}
+                      m_sRequest("null"), m_sEndpoint("null"),
+                      m_bOpenSocket(false), m_nThreadCount(3)
+                {
+                    m_tvThreads.reserve(m_nThreadCount);
+                }
 
-                ~client_interface() {}
+                ~client_interface() {
+                    m_tvThreads.clear();
+                }
 
                 void SetHost(std::string h) {m_sHost = h;}
                 void PrintHost() {std::cout << "Host : " << m_sHost << std::endl;}
@@ -36,24 +40,54 @@ namespace hjw {
                 void SetEndpoint(std::string e) {m_sEndpoint = e;}
                 void PrintEndpoint() {std::cout << "Endpoint : " << m_sEndpoint << std::endl;}
 
-                void SetThreadCount(int tc) {m_nThreadCount = tc;}
+                void SetThreadCount(int tc) {
+                    if(!isOpen()) {
+                        m_nThreadCount = tc;
+                        m_tvThreads.clear();
+                        m_tvThreads.reserve(m_nThreadCount);
+                    }
+                }
+
                 void PrintThreadCount() {std::cout << "Thread count : " << m_nThreadCount << std::endl;}
 
                 void Open() {
-                    // Launch the asynchronous operation
-                    // Create instance of sessiona and return shared pointer
-                    m_pSession = std::make_shared<session>(m_oAsioContext, m_oSSlContext);
-                    m_pSession->Run(m_sHost.c_str(), m_sPort.c_str(), m_sRequest.c_str(), m_sEndpoint.c_str());
+                    if(m_bOpenSocket) {
+                        std::cout << "Socket already open.\n";
+                        return;
+                    }
 
-                    // Run the IO service
-                    m_tContextThread = std::thread([this](){m_oAsioContext.run();});
+                    try {
+                        std::cout << "Openning socket ... \n";
+
+                        // Launch the asynchronous operation
+                        // Create instance of sessiona and return shared pointer
+                        m_pSession = std::make_shared<session>(m_oAsioContext, m_oSSlContext);
+                        m_pSession->Run(m_sHost.c_str(), m_sPort.c_str(), m_sRequest.c_str(), m_sEndpoint.c_str());
+
+                        // Run the IO service
+                        for(int i=0; i < m_nThreadCount; i++) {
+                            m_tvThreads.emplace_back([this](){m_oAsioContext.run();});
+                        }
+                        m_bOpenSocket = true;
+                    }catch(std::exception& e) {
+                        std::cerr << "Client exception" << e.what() << std::endl;
+                        return;
+                    }
+                }
+
+                bool isOpen() {
+                    return m_bOpenSocket;
                 }
 
                 void Close() {
                     m_oAsioContext.stop();
-                    if(m_tContextThread.joinable())
-                        m_tContextThread.join();
+                    for(auto& t : m_tvThreads) {
+                        if(t.joinable()) {
+                            t.join();
+                        }
+                    }
 
+                    m_bOpenSocket = false;
                     std::cout << "Socket connection closed\n";
                 }
 
@@ -61,7 +95,8 @@ namespace hjw {
                 asio::io_context m_oAsioContext;
                 ssl::context m_oSSlContext{ssl::context::tlsv12_client};
 
-                std::thread m_tContextThread;
+                std::vector<std::thread> m_tvThreads;
+                int m_nThreadCount;
 
                 std::shared_ptr<session> m_pSession;
 
@@ -70,7 +105,7 @@ namespace hjw {
                 std::string m_sRequest;
                 std::string m_sEndpoint;
 
-                int m_nThreadCount;
+                bool m_bOpenSocket;
         };
 
     }
