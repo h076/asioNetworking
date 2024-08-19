@@ -23,6 +23,22 @@
 
 #include <iostream>
 
+#include <boost/beast/core.hpp>
+#include <boost/beast/ssl.hpp>
+#include <boost/beast/websocket.hpp>
+#include <boost/beast/websocket/ssl.hpp>
+#include <boost/asio/strand.hpp>
+#include <cstdlib>
+#include <functional>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <cstdio>
+#include <boost/asio/signal_set.hpp>
+#include <thread>
+#include <boost/asio.hpp>
+#include <boost/thread.hpp>
+
 namespace asio = boost::asio;
 namespace beast = boost::beast; // from boost/beast.hpp
 namespace http = beast::http; // from boost/beast/http.hpp
@@ -37,7 +53,7 @@ namespace hjw {
     namespace wss {
 
         // General function to report failure
-        void fail(beast::error_code ec, char const* what) {
+        void fail(std::error_code ec, char const* what) {
             std::cerr << what << ec.message() << "\n";
         }
 
@@ -54,6 +70,10 @@ namespace hjw {
                       m_oAsioContext(asio_ioc), // reference to io_context created in wss_client_interface
                       m_oAsioStrand(asio_ioc.get_executor()) // Get strand from the io context, when work is submitted to a strand it ensures only one thread is running at a time
                 {
+
+                }
+
+                ~session() {
 
                 }
 
@@ -172,7 +192,7 @@ namespace hjw {
 
                     // print the data recieved from the websocket
                     // make_printable interprets the bytes as characters
-                    std::cout << beast::make_printable(m_oBuffer.data()) << "By thread ID : " << boost::this_thread::get_id() << std::endl;
+                    std::cout << beast::make_printable(m_oBuffer.data()) << " By thread ID : " << boost::this_thread::get_id() << std::endl;
 
                     // clean the buffer
                     m_oBuffer.consume(m_oBuffer.size());
