@@ -144,8 +144,10 @@ namespace hjw {
                             std::remove(m_dqConnections.begin(), m_dqConnections.end(), nullptr), m_dqConnections.end());
                 }
 
+            protected:
+
                 // Called to explicitly process messages in the server queue
-                void update(size_t maxMesssages = -1, bool bWait = false) {
+                virtual void update(size_t maxMesssages = -1, bool bWait = false) {
                     // so that we do not occupy the CPU while doing nothing
                     // we can tell the server to rest
                     if (bWait) m_qMessagesIn.wait();
