@@ -2,7 +2,11 @@
 .idea
 *.log
 tmp/
-
+netClient/
+netServer/
+src/
+websocketClient/
+.cache/
 build/
 compile_commands.json
 asio/
