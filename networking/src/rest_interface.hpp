@@ -3,6 +3,8 @@
 
 #include <rest_listener.hpp>
 #include <thread>
+#include <boost/asio/signal_set.hpp>
+
 
 namespace beast = boost::beast;
 namespace http = beast::http;
@@ -22,7 +24,7 @@ namespace hjw {
             public:
 
                 Interface(std::string address, uint16_t port)
-                    : m_ioc(), m_ctxGuard(net::make_work_guard(m_ioc))
+                    : m_ioc(), m_ctxGuard(net::make_work_guard(m_ioc)), m_Signals(m_ioc, SIGINT, SIGTERM)
                 {
                     // Initialize the listener with the handler
                     tcp::endpoint endpoint(net::ip::make_address(address), port);
@@ -30,6 +32,14 @@ namespace hjw {
                                     [this](http::request<http::string_body> const& req) {
                                         return this->handler(req);
                                     });
+
+                    // Handle CRTL+C to gracefully stop the ioc and call destructor
+                    // Signal set listening for crtl+c
+                    m_Signals.async_wait([this](beast::error_code const&, int) {
+                            std::cout << "Stopping REST service .... " << std::endl;
+                            m_ctxGuard.reset();
+                            m_ioc.stop();
+                        });
 
                     // Launch dedicated thread for io_context
                     m_ctxThread = std::thread([this]() {
@@ -42,9 +52,7 @@ namespace hjw {
                 }
 
                 ~Interface() {
-                    // Stop io_context and join thread
-                    m_ctxGuard.reset();
-                    m_ioc.stop();
+                    // join thread
                     if (m_ctxThread.joinable())
                         m_ctxThread.join();
                 }
@@ -85,6 +93,9 @@ namespace hjw {
 
                 // Dedicated io thread
                 std::thread m_ctxThread;
+
+                // Signal set for gracefull exit
+                net::signal_set m_Signals;
 
                 // work guard to keep Listener alive
                 net::executor_work_guard<net::io_context::executor_type> m_ctxGuard;
