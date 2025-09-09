@@ -68,7 +68,7 @@ namespace hjw {
                     for (;;) {
                         tcp::socket socket = co_await m_Acceptor.async_accept(net::use_awaitable);
                         // Create session obejct within shared ptr
-                        auto session = std::make_shared<Session>(std::move(socket));
+                        auto session = std::make_shared<Session>(std::move(socket), m_Handler);
                         // spawn co_routine to run session
                         // Passing ptr to lambda to keep session alive
                         net::co_spawn(m_ioc, [session]() -> net::awaitable<void> {
