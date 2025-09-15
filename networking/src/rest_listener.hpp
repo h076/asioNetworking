@@ -19,8 +19,8 @@ namespace hjw {
 
             public:
 
-                using Handler = std::function<http::response<http::string_body>
-                                              (http::request<http::string_body> const&)>;
+                using Handler = std::function<http::response<http::dynamic_body>
+                                              (http::request<http::dynamic_body> const&)>;
 
                 // Pass Handler from interface class, to be passed to each sessiono
                 Listener(net::io_context& ioc, tcp::endpoint endpoint, Handler h)

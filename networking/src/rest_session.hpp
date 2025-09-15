@@ -28,8 +28,8 @@ namespace hjw {
 
             public:
 
-                using Handler = std::function<http::response<http::string_body>
-                                              (http::request<http::string_body> const&)>;
+                using Handler = std::function<http::response<http::dynamic_body>
+                                              (http::request<http::dynamic_body> const&)>;
 
                 // Socket must be passed through constructor
                 // Created by async_accept fucnction that runs session
@@ -46,15 +46,15 @@ namespace hjw {
                 net::awaitable<void> co_read() {
                     auto self(shared_from_this());
                     co_await http::async_read(m_Socket, m_Buffer, m_Req, net::use_awaitable);
-                    http::response<http::string_body> res = m_Handler(m_Req);
+                    http::response<http::dynamic_body> res = m_Handler(m_Req);
                     co_await co_write(res);
                 }
 
                 // Write
                 // Shoudl always occur is unison with a read
-                net::awaitable<void> co_write(http::response<http::string_body> res) {
+                net::awaitable<void> co_write(http::response<http::dynamic_body> res) {
                     auto self(shared_from_this());
-                    auto sp_res = std::make_shared<http::response<http::string_body>>(std::move(res));
+                    auto sp_res = std::make_shared<http::response<http::dynamic_body>>(std::move(res));
                     co_await http::async_write(m_Socket, *sp_res, net::use_awaitable);
                     m_Socket.shutdown(tcp::socket::shutdown_send);
                 }
@@ -69,7 +69,7 @@ namespace hjw {
                 beast::flat_buffer m_Buffer;
 
                 // HTTP request object
-                http::request<http::string_body> m_Req;
+                http::request<http::dynamic_body> m_Req;
 
                 // Handler for requests
                 Handler m_Handler;
