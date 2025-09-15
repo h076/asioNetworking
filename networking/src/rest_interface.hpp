@@ -29,7 +29,7 @@ namespace hjw {
                     // Initialize the listener with the handler
                     tcp::endpoint endpoint(net::ip::make_address(address), port);
                     m_Listener = std::make_shared<Listener>(m_ioc, endpoint,
-                                    [this](http::request<http::string_body> const& req) {
+                                    [this](http::request<http::dynamic_body> const& req) {
                                         return this->handler(req);
                                     });
 
@@ -61,13 +61,13 @@ namespace hjw {
 
                 // General handler
                 // Will call specific HTTP method handler
-                http::response<http::string_body> handler(http::request<http::string_body> const& req) {
+                http::response<http::dynamic_body> handler(http::request<http::dynamic_body> const& req) {
                     switch (req.method()) {
                         case http::verb::get: return handle_get(req);
                         case http::verb::post: return handle_post(req);
                         case http::verb::put: return handle_put(req);
                         case http::verb::delete_: return handle_delete(req);
-                        defaut: return http::response<http::string_body>
+                        defaut: return http::response<http::dynamic_body>
                                 (http::status::method_not_allowed, req.version());
                     }
                 }
@@ -75,16 +75,16 @@ namespace hjw {
             protected:
 
                 // GET
-                virtual http::response<http::string_body> handle_get(http::request<http::string_body> const& req) = 0;
+                virtual http::response<http::dynamic_body> handle_get(http::request<http::dynamic_body> const& req) = 0;
 
                 // POST
-                virtual http::response<http::string_body> handle_post(http::request<http::string_body> const& req) = 0;
+                virtual http::response<http::dynamic_body> handle_post(http::request<http::dynamic_body> const& req) = 0;
 
                 // PUT
-                virtual http::response<http::string_body> handle_put(http::request<http::string_body> const& req) = 0;
+                virtual http::response<http::dynamic_body> handle_put(http::request<http::dynamic_body> const& req) = 0;
 
                 // DELETE
-                virtual http::response<http::string_body> handle_delete(http::request<http::string_body> const& req) = 0;
+                virtual http::response<http::dynamic_body> handle_delete(http::request<http::dynamic_body> const& req) = 0;
 
             private:
 
