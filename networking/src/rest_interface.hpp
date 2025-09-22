@@ -24,14 +24,28 @@ namespace hjw {
             public:
 
                 Interface(std::string address, uint16_t port)
-                    : m_ioc(), m_ctxGuard(net::make_work_guard(m_ioc)), m_Signals(m_ioc, SIGINT, SIGTERM)
-                {
+                    : m_ioc(),
+                      m_ctxGuard(net::make_work_guard(m_ioc)),
+                      m_Signals(m_ioc, SIGINT, SIGTERM),
+                      m_address(address), m_port(port)
+                {}
+
+                ~Interface() {
+                    // join thread
+                    if (m_ctxThread.joinable())
+                        m_ctxThread.join();
+                }
+
+            protected:
+
+                void start() {
                     // Initialize the listener with the handler
-                    tcp::endpoint endpoint(net::ip::make_address(address), port);
+                    tcp::endpoint endpoint(net::ip::make_address(m_address), m_port);
                     m_Listener = std::make_shared<Listener>(m_ioc, endpoint,
                                     [this](http::request<http::dynamic_body> const& req) {
                                         return this->handler(req);
                                     });
+                    m_Listener->start();
 
                     // Handle CRTL+C to gracefully stop the ioc and call destructor
                     // Signal set listening for crtl+c
@@ -51,13 +65,7 @@ namespace hjw {
                     });
                 }
 
-                ~Interface() {
-                    // join thread
-                    if (m_ctxThread.joinable())
-                        m_ctxThread.join();
-                }
-
-            private:
+            protected:
 
                 // General handler
                 // Will call specific HTTP method handler

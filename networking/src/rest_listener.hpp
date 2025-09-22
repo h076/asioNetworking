@@ -15,7 +15,7 @@ namespace hjw {
     namespace rest {
 
         // Accepts incoming connections and spawns sessions for each connection
-        class Listener : std::enable_shared_from_this<Listener> {
+        class Listener : public std::enable_shared_from_this<Listener> {
 
             public:
 
@@ -55,10 +55,12 @@ namespace hjw {
                         std::cerr << "Listen error: " << ec.message() << std::endl;
                         return;
                     }
+                }
 
+                void start() {
                     // The use of detached means forget about this co_routine
                     // Ignore all exceptions thrown
-                    net::co_spawn(ioc, co_accept(), net::detached);
+                    net::co_spawn(m_ioc, co_accept(), net::detached);
                 }
 
             private:
@@ -69,6 +71,7 @@ namespace hjw {
                         tcp::socket socket = co_await m_Acceptor.async_accept(net::use_awaitable);
                         // Create session obejct within shared ptr
                         auto session = std::make_shared<Session>(std::move(socket), m_Handler);
+
                         // spawn co_routine to run session
                         // Passing ptr to lambda to keep session alive
                         net::co_spawn(m_ioc, [session]() -> net::awaitable<void> {
