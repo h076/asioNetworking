@@ -24,7 +24,7 @@ namespace hjw {
         // This class will handle induvidual client sessions over HTTP
         // Using async_read and async_write
         // Enable shared is used to prevent dangling operations if pointer destroyed
-        class Session : std::enable_shared_from_this<Session> {
+        class Session : public std::enable_shared_from_this<Session> {
 
             public:
 
