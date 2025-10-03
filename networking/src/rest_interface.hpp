@@ -112,47 +112,49 @@ namespace hjw {
 
             protected:
 
-                // Standard HTTP
+                // Standard HTTP / Force impl
                 virtual http::response<http::dynamic_body> handle_get(http::request<http::dynamic_body> const& req) = 0;
                 virtual http::response<http::dynamic_body> handle_post(http::request<http::dynamic_body> const& req) = 0;
                 virtual http::response<http::dynamic_body> handle_put(http::request<http::dynamic_body> const& req) = 0;
                 virtual http::response<http::dynamic_body> handle_delete(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_connect(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_options(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_trace(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_patch(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_head(http::request<http::dynamic_body> const& req) = 0;
+
+                // Optional
+                virtual http::response<http::dynamic_body> handle_connect(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_options(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_trace(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_patch(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_head(http::request<http::dynamic_body> const& req);
 
                 // Misc / special verbs
-                virtual http::response<http::dynamic_body> handle_unknown(http::request<http::dynamic_body> const& req) = 0;
+                virtual http::response<http::dynamic_body> handle_unknown(http::request<http::dynamic_body> const& req);
 
                 // WebDAV / extension methods
-                virtual http::response<http::dynamic_body> handle_acl(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_bind(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_copy(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_link(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_lock(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_merge(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_mkactivity(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_mkcalendar(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_mkcol(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_move(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_propfind(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_proppatch(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_rebind(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_report(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_search(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_subscribe(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_unbind(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_unlink(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_unlock(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_unsubscribe(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_checkout(http::request<http::dynamic_body> const& req) = 0;
+                virtual http::response<http::dynamic_body> handle_acl(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_bind(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_copy(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_link(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_lock(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_merge(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_mkactivity(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_mkcalendar(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_mkcol(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_move(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_propfind(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_proppatch(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_rebind(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_report(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_search(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_subscribe(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_unbind(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_unlink(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_unlock(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_unsubscribe(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_checkout(http::request<http::dynamic_body> const& req);
 
                 // Extra / uncommon verbs
-                virtual http::response<http::dynamic_body> handle_msearch(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_notify(http::request<http::dynamic_body> const& req) = 0;
-                virtual http::response<http::dynamic_body> handle_purge(http::request<http::dynamic_body> const& req) = 0;
+                virtual http::response<http::dynamic_body> handle_msearch(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_notify(http::request<http::dynamic_body> const& req);
+                virtual http::response<http::dynamic_body> handle_purge(http::request<http::dynamic_body> const& req);
 
 
             private:
